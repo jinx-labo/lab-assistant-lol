@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assistant LoL</title>
+<style>
+:root{
+  --bg:#0e1116;--card:#161b22;--card2:#1c232d;--bd:#2a3340;
+  --txt:#e6edf3;--mut:#8b98a8;--acc:#c89b3c;--acc2:#0596aa;
+  --danger:#e5484d;--ok:#3fb950;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--bg);color:var(--txt);line-height:1.45;font-size:16px;
+}
+header{
+  padding:18px 16px 12px;text-align:center;
+  background:linear-gradient(180deg,#13202b,var(--bg));
+  border-bottom:1px solid var(--bd);
+}
+header h1{margin:0;font-size:1.25rem;letter-spacing:.5px}
+header h1 span{color:var(--acc)}
+header p{margin:4px 0 0;color:var(--mut);font-size:.8rem}
+main{max-width:560px;margin:0 auto;padding:16px}
+.card{
+  background:var(--card);border:1px solid var(--bd);border-radius:14px;
+  padding:14px;margin-bottom:14px;
+}
+label{display:block;font-size:.78rem;color:var(--mut);margin:10px 0 5px;text-transform:uppercase;letter-spacing:.5px}
+label:first-child{margin-top:0}
+input,select{
+  width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--bd);
+  background:var(--card2);color:var(--txt);font-size:1rem;
+}
+input:focus,select:focus{outline:none;border-color:var(--acc2)}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+button{
+  width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;
+  background:var(--acc);color:#1a1206;font-weight:700;font-size:1rem;cursor:pointer;
+}
+button:active{transform:scale(.99)}
+.sec-title{font-size:.95rem;font-weight:700;margin:0 0 10px;color:var(--acc);display:flex;align-items:center;gap:8px}
+.reflex{
+  display:flex;gap:12px;align-items:flex-start;padding:11px;border-radius:10px;
+  background:var(--card2);margin-bottom:9px;border-left:3px solid var(--acc2);
+}
+.reflex .ico{font-size:1.4rem;line-height:1.4}
+.reflex .t{font-weight:600;font-size:.92rem}
+.reflex .d{font-size:.82rem;color:var(--mut)}
+.danger{border-left-color:var(--danger)}
+.pill{
+  display:inline-block;font-size:.74rem;padding:3px 9px;border-radius:20px;
+  background:#23303d;color:var(--mut);margin:2px 4px 2px 0;
+}
+.matchup{
+  padding:11px;border-radius:10px;background:var(--card2);margin-bottom:9px;
+  font-size:.9rem;
+}
+.matchup b{color:var(--acc)}
+.links a{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px;border-radius:10px;background:var(--card2);margin-bottom:8px;
+  color:var(--txt);text-decoration:none;font-size:.9rem;border:1px solid var(--bd);
+}
+.links a span.arr{color:var(--acc2)}
+.hidden{display:none}
+.note{font-size:.75rem;color:var(--mut);text-align:center;margin:18px 0 6px}
+.tag{font-size:.7rem;color:var(--acc2);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1>Assistant <span>LoL</span></h1>
+  <p>Prépare ta lane & ta game — avant le 1er kill</p>
+</header>
+
+<main>
+  <form id="form" class="card">
+    <label>Mon champion</label>
+    <input id="me" placeholder="Ex: Garen" autocomplete="off">
+
+    <div class="row">
+      <div>
+        <label>Mon rôle</label>
+        <select id="role">
+          <option>Top</option><option>Jungle</option><option>Mid</option>
+          <option>ADC</option><option>Support</option>
+        </select>
+      </div>
+      <div>
+        <label>Vis-à-vis (laner)</label>
+        <input id="lane" placeholder="Ex: Darius" autocomplete="off">
+      </div>
+    </div>
+
+    <label>Jungler adverse</label>
+    <input id="jg" placeholder="Ex: Lee Sin" autocomplete="off">
+
+    <button type="submit">Générer mon plan</button>
+  </form>
+
+  <section id="out" class="hidden">
+
+    <div class="card">
+      <div class="sec-title">⚔️ Matchup</div>
+      <div class="matchup" id="mu"></div>
+      <div id="tags"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">🧠 Mes 3 réflexes clés</div>
+      <div id="reflexes"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">🌲 Jungle adverse</div>
+      <div id="jgbox"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">🔗 Vérifier en ligne</div>
+      <div class="links" id="links"></div>
+      <div class="note">Liens à ouvrir manuellement quand tu es connecté.</div>
+    </div>
+
+  </section>
+
+  <div class="note">v1 — embryon. Données génériques (pas de stats live).</div>
+</main>
+
+<script>
+(function(){
+  var f=document.getElementById('form');
+  var out=document.getElementById('out');
+
+  function cap(s){s=(s||'').trim();return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+
+  // base de réflexes par rôle (génériques mais utiles)
+  var roleReflex={
+    Top:[
+      {i:'🗺️',t:'Surveille la map à chaque vague',d:'Le top est isolé : check minimap toutes les ~7s, surtout sous niveau 6.'},
+      {i:'🌊',t:'Gère ta wave avant un trade',d:'Ne trade pas quand ta wave pousse vers l\'ennemi (gank facile).'},
+      {i:'🛡️',t:'Garde ton TP pour un play',d:'Évite de le cramer en early : c\'est ton tempo de retour/teleport play.'}
+    ],
+    Jungle:[
+      {i:'⏱️',t:'Track le jungler adverse',d:'Note où il start, anticipe son prochain camp et ses ganks.'},
+      {i:'👁️',t:'Ward avant d\'invade ou d\'objectif',d:'Vision = survie. Place une ward avant Drake/Herald.'},
+      {i:'🎯',t:'Priorise lanes qui peuvent suivre',d:'Gank là où ton allié a CC / push, pas là où tu meurs pour rien.'}
+    ],
+    Mid:[
+      {i:'🗺️',t:'Garde la priorité',d:'Push la wave pour roam et aider drake/scuttle.'},
+      {i:'⚡',t:'Note les cooldowns de skillshots',d:'Dodge la spell clé adverse, punis pendant son CD.'},
+      {i:'🏃',t:'Roam quand la wave pousse',d:'Va aider top/bot dès que tu as un avantage de tempo.'}
+    ],
+    ADC:[
+      {i:'➡️',t:'Position : reste derrière',d:'En teamfight, ne va jamais devant ton frontline.'},
+      {i:'🎯',t:'Last-hit > poke gratuit',d:'Ton early dépend du CS, ne perds pas de farm pour un trade risqué.'},
+      {i:'👀',t:'Respecte les engages adverses',d:'Repère le support engage / assassin ennemi avant d\'avancer.'}
+    ],
+    Support:[
+      {i:'👁️',t:'Vision avant tout',d:'Ward les buissons et l\'entrée de rivière dès le niveau 1.'},
+      {i:'🤝',t:'Trade avec ton ADC',d:'Engage seulement si ton ADC peut suivre le follow-up.'},
+      {i:'🌍',t:'Track les rotations',d:'Préviens des roams mid et des ganks jungle adverse.'}
+    ]
+  };
+
+  function jgTips(name){
+    name=name.toLowerCase();
+    var t=[];
+    var early=['lee','elise','xin','jarvan','nidalee','rengar','kha'];
+    var scale=['master yi','yi','kayn','karthus','fiddle','nunu','sejuani'];
+    var aggro=false,late=false;
+    for(var i=0;i<early.length;i++) if(name.indexOf(early[i])>=0) aggro=true;
+    for(var j=0;j<scale.length;j++) if(name.indexOf(scale[j])>=0) late=true;
+    if(aggro) t.push({i:'⚠️',t:'Jungler early-gank',d:'Ward tôt (2-3 min), respecte les niveaux 3-6 : ganks fréquents.',c:'danger'});
+    if(late) t.push({i:'⏳',t:'Jungler qui scale',d:'Pression-le tôt : invade, vole ses camps, prends les objectifs avant qu\'il monte.',c:''});
+    if(!aggro && !late) t.push({i:'🔍',t:'Profil à vérifier',d:'Repère sur OP.GG s\'il est plutôt early-gank ou farm/scaling.',c:''});
+    t.push({i:'🚩',t:'Garde un ping prêt',d:'Au moindre doute (jg adverse disparu), ping "danger" à ta lane.',c:''});
+    return t;
+  }
+
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var me=cap(document.getElementById('me').value)||'Mon champion';
+    var role=document.getElementById('role').value;
+    var lane=cap(document.getElementById('lane').value)||'?';
+    var jg=cap(document.getElementById('jg').value)||'?';
+
+    document.getElementById('mu').innerHTML=
+      '<b>'+me+'</b> ('+role+') vs <b>'+lane+'</b>'+
+      '<br><span style="color:var(--mut);font-size:.8rem">Vérifie le détail du matchup ci-dessous avant la phase de pick.</span>';
+
+    document.getElementById('tags').innerHTML=
+      '<span class="pill">Range vs Melee ?</span>'+
+      '<span class="pill">Qui win lvl 1-3 ?</span>'+
+      '<span class="pill">Spike (item/lvl 6) ?</span>'+
+      '<span class="pill">Sa spell à dodge</span>';
+
+    var rf=roleReflex[role]||roleReflex.Top;
+    var html='';
+    rf.forEach(function(r){
+      html+='<div class="reflex"><div class="ico">'+r.i+'</div><div><div class="t">'+r.t+'</div><div class="d">'+r.d+'</div></div></div>';
+    });
+    document.getElementById('reflexes').innerHTML=html;
+
+    var jb='';
+    jgTips(jg).forEach(function(r){
+      jb+='<div class="reflex '+(r.c||'')+'"><div class="ico">'+r.i+'</div><div><div class="t">'+r.t+' <span class="tag">'+jg+'</span></div><div class="d">'+r.d+'</div></div></div>';
+    });
+    document.getElementById('jgbox').innerHTML=jb;
+
+    function ql(s){return encodeURIComponent(s);}
+    var links='';
+    if(lane!=='?'){
+      links+='<a href="https://www.op.gg/champions/'+ql(lane.toLowerCase())+'" target="_blank" rel="noopener">OP.GG — '+lane+' <span class="arr">↗</span></a>';
+      if(me!=='Mon champion')
+        links+='<a href="https://lolalytics.com/lol/'+ql(me.toLowerCase())+'/vs/'+ql(lane.toLowerCase())+'/build/" target="_blank" rel="noopener">Lolalytics — '+me+' vs '+lane+' <span class="arr">↗</span></a>';
+    }
+    if(jg!=='?')
+      links+='<a href="https://www.op.gg/champions/'+ql(jg.toLowerCase())+'" target="_blank" rel="noopener">OP.GG — JG '+jg+' <span class="arr">↗</span></a>';
+    if(me!=='Mon champion')
+      links+='<a href="https://app.mobalytics.gg/lol/champions/'+ql(me.toLowerCase())+'/build" target="_blank" rel="noopener">Mobalytics — '+me+' build <span class="arr">↗</span></a>';
+    if(!links) links='<div class="matchup">Renseigne les champions pour avoir les liens.</div>';
+    document.getElementById('links').innerHTML=links;
+
+    out.classList.remove('hidden');
+    out.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+})();
+</script>
+</body>
+</html>
