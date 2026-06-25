@@ -24,6 +24,31 @@
       100% { background-position: 0% 50%; }
     }
     .container { padding: 2rem; }
+    .hero-title {
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px #ff4f7b, 0 0 30px #ff4f7b, 0 0 60px #c2185b;
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    .hero-subtitle {
+      margin-top: 0.6rem;
+      font-size: clamp(1rem, 3vw, 1.4rem);
+      font-weight: 400;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      color: #f0c040;
+      text-shadow: 0 0 8px #f0c04088;
+    }
+    .divider {
+      margin: 2rem auto;
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #7d5fff, #ff4f7b);
+      border-radius: 2px;
+      opacity: 0.7;
+    }
     h1 {
       font-size: clamp(2rem, 6vw, 4rem);
       letter-spacing: 2px;
@@ -43,6 +68,9 @@
 </head>
 <body>
   <div class="container">
+    <div class="hero-title">Assistant LoL</div>
+    <div class="hero-subtitle">tes 3 conseils de matchup, en un coup d'œil</div>
+    <div class="divider"></div>
     <h1>lab-assistant-lol</h1>
     <p>Lab Jinx — prêt à l'action ⚡</p>
   </div>
