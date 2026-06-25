@@ -19,11 +19,11 @@
       text-align: center;
     }
     @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    .container { padding: 2rem; }
+    .container { padding: 2rem; max-width: 520px; width: 100%; }
     .hero-title {
       font-size: clamp(2.8rem, 8vw, 5.5rem);
       font-weight: 900;
@@ -42,27 +42,100 @@
       text-shadow: 0 0 8px #f0c04088;
     }
     .divider {
-      margin: 2rem auto;
+      margin: 1.6rem auto;
       width: 60px;
       height: 3px;
       background: linear-gradient(90deg, #7d5fff, #ff4f7b);
       border-radius: 2px;
       opacity: 0.7;
     }
-    h1 {
-      font-size: clamp(2rem, 6vw, 4rem);
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px #7d5fff, 0 0 20px #7d5fff, 0 0 40px #533483;
-      animation: pulse 2.5s ease-in-out infinite;
-    }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.85; }
+      50%       { opacity: 0.85; }
     }
-    p {
-      margin-top: 1rem;
-      font-size: 1.1rem;
-      opacity: 0.8;
+
+    /* ── matchup form ── */
+    .matchup-form {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .matchup-form input {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid #7d5fff66;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.95rem;
+      padding: 0.5rem 0.75rem;
+      width: 148px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .matchup-form input::placeholder { color: #ffffff55; }
+    .matchup-form input:focus { border-color: #7d5fff; }
+    .matchup-form button {
+      background: linear-gradient(135deg, #7d5fff, #ff4f7b);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 0.5rem 1.1rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: opacity .2s, transform .1s;
+    }
+    .matchup-form button:hover  { opacity: 0.88; }
+    .matchup-form button:active { transform: scale(0.96); }
+
+    /* ── tips card ── */
+    #tips {
+      display: none;
+      margin-top: 0.2rem;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid #7d5fff44;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      text-align: left;
+    }
+    #tips .matchup-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #f0c040;
+      margin-bottom: 0.7rem;
+      opacity: 0.85;
+    }
+    #tips ol {
+      padding-left: 1.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    #tips li {
+      font-size: 0.92rem;
+      line-height: 1.4;
+      opacity: 0.92;
+    }
+    #tips li span.tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-right: 0.4rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #7d5fff33;
+      color: #b39dff;
+    }
+
+    .footer-note {
+      margin-top: 1.4rem;
+      font-size: 0.8rem;
+      opacity: 0.45;
     }
   </style>
 </head>
@@ -71,8 +144,88 @@
     <div class="hero-title">Assistant LoL</div>
     <div class="hero-subtitle">tes 3 conseils de matchup, en un coup d'œil</div>
     <div class="divider"></div>
-    <h1>lab-assistant-lol</h1>
-    <p>Lab Jinx — prêt à l'action ⚡</p>
+
+    <div class="matchup-form">
+      <input id="champ"  type="text" placeholder="Ton champion" autocomplete="off" spellcheck="false">
+      <input id="enemy" type="text" placeholder="Adversaire"   autocomplete="off" spellcheck="false">
+      <button onclick="getAdvice()">Conseils</button>
+    </div>
+
+    <div id="tips">
+      <div class="matchup-label" id="tips-label"></div>
+      <ol id="tips-list"></ol>
+    </div>
+
+    <p class="footer-note">Lab Jinx — prêt à l'action ⚡</p>
   </div>
+
+  <script>
+    const MATCHUPS = {
+      'garen|darius': [
+        { tag: 'Lane',  text: 'Trades courts niv. 1-2 : Q + auto + recul, jamais d\'extended trade.' },
+        { tag: 'Évite', text: 'Rester à portée de sa W après niv. 6 — ton silence ne stop pas son ult.' },
+        { tag: 'Spike',  text: 'Niv. 6 avec Trinity Force : rush lui avant qu\'il stacque son passive.' }
+      ],
+      'darius|garen': [
+        { tag: 'Lane',  text: 'Force des extended trades : stacque Hémorragie dès niv. 2 avec E+Q.' },
+        { tag: 'Évite', text: 'Engager quand son Q est off CD — la hache régénère sa vie.' },
+        { tag: 'Spike',  text: 'Niv. 6 : si 5 stacks, ult garantit kill même sous tour.' }
+      ],
+      'ahri|zed': [
+        { tag: 'Lane',  text: 'Garde ton E pour son ombre W : dash au bon moment pour esquiver le burst.' },
+        { tag: 'Évite', text: 'Jouer trop avancée sans vision — il roam et te prend sous angle.' },
+        { tag: 'Spike',  text: 'Niv. 6 : R vers lui puis E + combo, son Death Mark se cancel si tu t\'éloignes vite.' }
+      ],
+      'zed|ahri': [
+        { tag: 'Lane',  text: 'Trades avec W shadow depuis le côté pour éviter son E de punition.' },
+        { tag: 'Évite', text: 'Son dash de fuite à 3 charges — ne gaspille pas ton ult trop tôt.' },
+        { tag: 'Spike',  text: 'Niv. 3 : poke avec W+Q constant, tu outrange sa zone de confort.' }
+      ],
+      'jinx|caitlyn': [
+        { tag: 'Lane',  text: 'Reste derrière ton support, sa portée native te poke si tu t\'exposes.' },
+        { tag: 'Évite', text: 'Marcher sur ses pièges W — perdre le trade immédiatement.' },
+        { tag: 'Spike',  text: 'Niv. 6 + Kraken Slayer : engage quand elle a utilisé son R, burst windows ouverte.' }
+      ],
+      'caitlyn|jinx': [
+        { tag: 'Lane',  text: 'Zone avec tes pièges sous tes cupcakes pour forcer des trades favorables.' },
+        { tag: 'Évite', text: 'Son Super Mega Death Rocket — garde un dash ou un écran de minions à niv. 6.' },
+        { tag: 'Spike',  text: 'Niv. 2 + First Strike : burst d\'ouverture Q+auto+headshot enchaîne.' }
+      ]
+    };
+
+    const GENERIC = [
+      { tag: 'Lane',  text: 'Identifie quel champion spike le plus tôt et adapte ton aggression en conséquence.' },
+      { tag: 'Évite', text: 'Trade sur cooldown ennemi, jamais en réponse — impose ton tempo.' },
+      { tag: 'Spike',  text: 'Anticipe le power spike niv. 6 adverse : warde et recule 30s avant.' }
+    ];
+
+    function getAdvice() {
+      const c = document.getElementById('champ').value.trim().toLowerCase()
+                  .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const e = document.getElementById('enemy').value.trim().toLowerCase()
+                  .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const key = c + '|' + e;
+      const tips = MATCHUPS[key] || GENERIC;
+      const label = MATCHUPS[key]
+        ? (document.getElementById('champ').value.trim() || c) + ' vs ' + (document.getElementById('enemy').value.trim() || e)
+        : 'Conseil générique';
+
+      document.getElementById('tips-label').textContent = label;
+      const list = document.getElementById('tips-list');
+      list.innerHTML = '';
+      tips.forEach(t => {
+        const li = document.createElement('li');
+        li.innerHTML = '<span class="tag">' + t.tag + '</span>' + t.text;
+        list.appendChild(li);
+      });
+      const box = document.getElementById('tips');
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') getAdvice();
+    });
+  </script>
 </body>
 </html>
