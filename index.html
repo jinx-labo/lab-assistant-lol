@@ -90,6 +90,16 @@
     }
     .matchup-form button:hover  { opacity: 0.88; }
     .matchup-form button:active { transform: scale(0.96); }
+    /* swap button ─ round, secondary look */
+    .matchup-form button.swap-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid #7d5fff66;
+      padding: 0.5rem 0.7rem;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+    .matchup-form button.swap-btn:hover { opacity: 1; border-color: #7d5fff; }
+    .matchup-form button.swap-btn:active { transform: rotate(180deg) scale(0.96); }
 
     /* ── tips card ── */
     #tips {
@@ -147,6 +157,7 @@
 
     <div class="matchup-form">
       <input id="champ"  type="text" placeholder="Ton champion" autocomplete="off" spellcheck="false">
+      <button class="swap-btn" type="button" onclick="swapChamps()" title="Échanger les champions" aria-label="Échanger les champions">⇄</button>
       <input id="enemy" type="text" placeholder="Adversaire"   autocomplete="off" spellcheck="false">
       <button onclick="getAdvice()">Conseils</button>
     </div>
@@ -221,6 +232,16 @@
       const box = document.getElementById('tips');
       box.style.display = 'block';
       box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function swapChamps() {
+      const champ = document.getElementById('champ');
+      const enemy = document.getElementById('enemy');
+      const tmp = champ.value;
+      champ.value = enemy.value;
+      enemy.value = tmp;
+      // si des conseils sont déjà affichés, recalcule le matchup inversé
+      if (document.getElementById('tips').style.display === 'block') getAdvice();
     }
 
     document.addEventListener('keydown', e => {
